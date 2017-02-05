@@ -9,3 +9,4 @@ def home(request):
 
 def restaurantes(request):
 	return render(request,'restaurantes/restaurantes.html',{})
+
