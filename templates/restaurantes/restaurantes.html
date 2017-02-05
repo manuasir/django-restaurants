@@ -82,10 +82,10 @@
 			else
 				conta = 0;;
 			$.get({
-			  url: "/getrestaurantes",
-			  beforeSend: function(xhr){xhr.setRequestHeader('desplazamiento', conta);},
+			  url: "/restaurantes/getrestaurantes",
 			  context: document.body
 			}).done(function(array) {
+				console.log("salida ",array);
 				$("#lista").empty();
 				var json = JSON.parse(array);
 				console.log(array);
@@ -308,7 +308,7 @@
 				json.nombre = nombre;
 				console.log("JSON ",json);
 				$.post({
-			  		url: "/addrestaurantes",
+			  		url: "/restaurantes/addrestaurantes",
 			  		data: json,
 					context: document.body
 				}).done(function(array) {
@@ -336,7 +336,8 @@
 			<div class="panel panel-default">
  				<div class="panel-heading">Introducir restaurante</div>
  					<div class="panel-body">
-						
+							{% csrf_token %}
+
 							<label for="nombre">Nombre: </label><br>
 							<input class="form-control" type="text" id="nombre"><br>
 							

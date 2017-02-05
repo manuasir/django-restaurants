@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-
+from pymongo import MongoClient
+CLIENT = MongoClient('mongodb://localhost:27017/restdb')
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
