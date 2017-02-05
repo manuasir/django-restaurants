@@ -1,0 +1,11 @@
+{% extends "restaurantes/layout.html" %}
+{% block content %}
+	
+		 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+	        <ul class="nav navbar-nav">
+	          <li><a href="{% url 'auth_login' %}">Login</a></li>
+	          <li><a href="{% url 'registration_register' %}">Registro</a></li>
+	        </ul>
+	      </div><!-- /.navbar-collapse -->
+		{% block login %}{% endblock %}
+{% endblock %}

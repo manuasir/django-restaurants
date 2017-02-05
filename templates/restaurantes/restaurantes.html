@@ -1,0 +1,398 @@
+{% extends "restaurantes/layout.html" %}
+{% block content %}
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/sweetalert2/6.3.2/sweetalert2.min.css">
+	<script>
+		var desplazamiento = 0;
+		var coords = {};
+		var map;
+		var x;
+		var markers = [];
+		var conta=0;
+
+
+		$(function () {
+		    Highcharts.chart('container', {
+		        title: {
+		            text: 'Puntuaciones en tu zona',
+		            x: -20 //center
+		        },
+		        subtitle: {
+		            text: 'opiniones de usuarios',
+		            x: -20
+		        },
+		        xAxis: {
+		            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+		                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+		        },
+		        yAxis: {
+		            title: {
+		                text: 'Temperature (°C)'
+		            },
+		            plotLines: [{
+		                value: 0,
+		                width: 1,
+		                color: '#808080'
+		            }]
+		        },
+		        tooltip: {
+		            valueSuffix: 'votaciones'
+		        },
+		        legend: {
+		            layout: 'vertical',
+		            align: 'right',
+		            verticalAlign: 'middle',
+		            borderWidth: 0
+		        },
+		        series: [{
+		            name: '',
+		            data: [7.0, 6.9, 9.5, 14.5, 18.2, 21.5, 25.2, 26.5, 23.3, 18.3, 13.9, 9.6]
+		        }]
+		    });
+		});
+
+		function getTweets(term){
+
+			var query;
+			if(!term)
+				query = "restaurantes granada";
+			else
+				query = term;
+			$("#twitter").empty();
+
+			console.log("getTweets");
+			$.get({
+			  url: "/gettweets",
+			  beforeSend: function(xhr){xhr.setRequestHeader('query', query);},
+			  context: document.body
+			}).done(function(array) {
+				var arr = JSON.parse(array)
+				for(var i=0;i<arr.textos.length;i++)
+					$("#twitter").append('<li class="list-group-item">'+arr.textos[i]+'</li>')
+			});	
+		}				
+
+		function getRestaurantes(cont,callback){
+			
+			if(!cont)
+				conta = 0;
+			else if(cont>0)
+				conta += cont;
+			else if(cont == -3 && conta>=3)
+				conta -= Math.abs(cont);
+			else
+				conta = 0;;
+			$.get({
+			  url: "/getrestaurantes",
+			  beforeSend: function(xhr){xhr.setRequestHeader('desplazamiento', conta);},
+			  context: document.body
+			}).done(function(array) {
+				$("#lista").empty();
+				var json = JSON.parse(array);
+				console.log(array);
+				var id;
+				
+				for(var i=0;i<json.length;i++){
+					id = json[i]._id.$oid;
+					console.log(id);
+					$("#lista").append('<div class="row"><li id='+json[i]._id.$oid+' class="list-group-item"><button type="button" class="btn btn-default">'
+						+json[i].nombre
+						+'</button></li></div>')
+					$('#'+json[i]._id.$oid).data("data",json[i]).on('click',function(){
+						getInfo($(this).data("data"));
+					});
+					
+					cont += 1;
+					if(cont == json.length) return callback();
+				}
+			});	
+		}
+
+		function puntuar(data){
+
+			var puntuacion = $('#puntuar').val()
+			console.log("Puntuar",puntuacion);
+			if(puntuacion && puntuacion>0){
+				var datos = {};
+				datos.id = data;
+				datos.puntos = puntuacion;
+				console.log("puntuando",data,puntuacion)
+
+				$.post({
+			  		url: "/puntuarestaurante",
+			  		data: datos,
+					context: document.body
+				}).done(function(array) {
+					//var json = JSON.parse(array);
+					console.log(array);
+					//setMarkerAtAddress(json,function(){
+					//	callback()
+					//})
+				});	
+			}
+			
+
+		}
+
+		function getInfo(data){
+			getTweets(data.nombre);
+			for(var i=0;i<markers.length;i++){
+				if(markers[i].info.nombre == data.nombre)
+					goToMarker(markers[i]);
+			}
+
+		}
+		function getAllRestaurantes(callback){
+			$.get({
+			  url: "/getallrestaurantes",
+			  context: document.body
+			}).done(function(array) {
+				var json = JSON.parse(array);
+				setMarkerAtAddress(json,function(){
+					callback()
+				})
+			});	
+		}
+
+		function fontSize(tam){
+			var fontSize = parseInt($("body").css("font-size"));
+			fontSize = fontSize + tam + "px";
+			$("body").css({'font-size':fontSize});
+		}
+
+		function myMap() {
+			navigator.geolocation.getCurrentPosition(function(coord){
+			  	var mapCanvas = document.getElementById("map");
+			  	var marker = new google.maps.Marker({position: {lat: coord.coords.latitude, lng: coord.coords.longitude},
+					animation:google.maps.Animation.BOUNCE});
+			  	var mapOptions = {
+			    	center: {lat: coord.coords.latitude, lng: coord.coords.longitude},
+			   		zoom: 15
+			 	}
+			 	map = new google.maps.Map(mapCanvas, mapOptions);
+			  	marker.setMap(map);
+			  	getRestaurantes(null,function(){
+			  		getAllRestaurantes(function(){
+			  		});
+			  	});
+			  	
+			});
+
+		}
+
+		function clearMarkers(marker) {
+	    	marker.setMap(null);
+		}
+
+		function setMarkerAtAddress(dir,callback){
+			var addresses = {};	
+			if(!dir && !callback){
+				addresses.direccion = $('#direccion').val();
+				//console.log($('#direccion').val());
+				peticionGetHttpPlace(addresses,function(array){
+						var place = array.results[0].geometry;
+						console.log("setmarkerataddres",array.results[0]);
+						var marker = setMarker(place);
+						map.setZoom(18);
+						map.setCenter(marker.getPosition());
+						//return callback();
+						return;
+					})
+			}
+			else{
+				addresses = dir;
+				if(addresses instanceof Array == false){
+					peticionGetHttpPlace(addresses,function(array){
+						var place = array.results[0];
+						//console.log(place);
+						var marker = setMarker(place);
+						map.setZoom(18);
+						map.setCenter(marker.getPosition());
+						return callback();
+					})
+				}
+				else{
+					var total = addresses.length;
+					for(var i=0;i<addresses.length;i++){
+						var place = {};
+						place.nombre = addresses[i].nombre;
+						place.puntuacion = addresses[i].puntuacion;
+						peticionGetHttpPlace(addresses[i],function(array,datos){			
+							datos.location = array.results[0].geometry.location;				
+							setMarker(datos);
+						  	total -= 1;
+							if(total == 0 ){  return callback();}
+						})
+					}
+				}
+			}
+		}
+
+		function createInfo(places,callback){
+			$.get({
+			  url: "/getinfo",
+			  beforeSend: function(xhr){xhr.setRequestHeader('id', places._id.$oid);},
+			  context: document.body
+			}).done(function(temp) {
+					//console.log(array);
+				var arraytemp = JSON.parse(temp);
+				var array = arraytemp[0];
+				console.log("Recibida info->",array);
+
+			  	var contentString = '<div id="content">'+
+			      '<div id="siteNotice">Nombre: '+array.nombre+
+			      '</div>'+
+			      '<div id="bodyContent">Puntuacion media: '+array.puntuacion+
+			      '</div>'+
+			      '<div id="bodyContent">Direccion: '+array.direccion+
+			      '<button type="button" class="btn btn-default" onclick=puntuar('+'"'+array._id.$oid+'"'+')>Puntúa</button><input id="puntuar" class="form-control"></input>'
+			      '</div>'+
+			      '</div>';
+
+				var infowindow = new google.maps.InfoWindow({
+					content: contentString
+				});
+				callback(infowindow);
+			});	
+		}
+
+		function goToMarker(marker){
+			map.setZoom(18);
+			map.setCenter(marker.getPosition());
+
+		}
+
+		function setMarker(places){
+			var place = places.location
+			console.log("setmarker",places);
+			var marker = new google.maps.Marker({position: {lat: place.lat, lng: place.lng}});
+			marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+			var info;
+			marker.addListener('click', function() {
+				map.setZoom(18);
+				map.setCenter(marker.getPosition());
+				createInfo(places,function(info){
+					info.open(map, marker);
+				})
+			});
+			marker.setMap(map);
+			marker.info = places;
+			markers.push(marker);
+			return marker;
+		}
+
+		function peticionGetHttpPlace(args,callback){
+			console.log("buscando ",args.direccion)
+			$.get({
+				  url: "http://maps.google.com/maps/api/geocode/json?address="+args.direccion,
+				  context: document.body
+				}).done(function(array) {
+					//console.log(array);
+					callback(array,args);
+				});	
+		}
+
+		function addRestaurantes(){
+			var direccionUsuario = $('#direccion').val();
+			var nombre = $('#nombre').val();
+			console.log(nombre);
+			var json = {};
+			var peticion = {};
+			peticion.direccion = direccionUsuario;
+			var marker;
+			//json.direccion = direccionUsuario;
+			
+			peticionGetHttpPlace(peticion,function(arr,yo){
+				console.log(arr);
+				json.cp = arr.results[0].address_components[6].long_name;
+				json.direccion = arr.results[0].formatted_address;
+				json.nombre = nombre;
+				console.log("JSON ",json);
+				$.post({
+			  		url: "/addrestaurantes",
+			  		data: json,
+					context: document.body
+				}).done(function(array) {
+					console.log("array",array);
+					var envio = {};
+					envio.id=JSON.parse(array).$oid;
+					console.log("_OID ",envio.id);
+					envio.location = arr.results[0].geometry.location;
+
+					marker = setMarker(envio);
+					goToMarker(marker);
+				});
+
+				
+			})
+
+
+		}
+
+	</script>
+
+	<div class="row">
+
+		<div class="col-sm-4">
+			<div class="panel panel-default">
+ 				<div class="panel-heading">Introducir restaurante</div>
+ 					<div class="panel-body">
+						
+							<label for="nombre">Nombre: </label><br>
+							<input class="form-control" type="text" id="nombre"><br>
+							
+							<label for="puntuacion">Direccion</label><br>
+							<input id="direccion" class="form-control" type="text" name="direccion"><br>
+							<input class="btn btn-default" onclick="addRestaurantes()" value="Registro">
+							<input class="btn btn-default" value="Buscar" onclick="setMarkerAtAddress()">
+						
+						<div id="container"></div>
+					</div>
+				</div>
+			</div>
+			
+ 				
+ 					
+						
+					
+				
+			
+		
+		<div class="col-sm-8">
+
+			<div class="panel panel-default">
+ 				<div class="panel-heading">Restaurantes en tu zona</div>
+ 					<div class="panel-body">
+ 						<div class="row">
+ 							<div class="col-sm-4">
+	 							<div id="map" style="width:300px;height:300px"></div>
+ 							</div>
+ 							<div class="col-sm-4">
+								<ul class="list-group" id="lista"></ul>	
+								<button class="btn-default" onclick="getRestaurantes(-3)">Anterior</button>
+								<button class="btn-default" onclick="getRestaurantes(3)" >Siguiente</button>
+							</div>
+						</div>
+					
+				
+						<div class="panel panel-default">
+	 						<div class="panel-heading">Comentarios en Twitter</div>
+	 							<div class="panel-body">
+									<div id="twitter"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAPFBkS78rp6vDR0eMOQgCDmvKOzUka0oI&callback=myMap"></script>
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+	<script src="https://code.highcharts.com/modules/exporting.js"></script>
+	<script src="https://cdn.jsdelivr.net/sweetalert2/6.3.2/sweetalert2.min.js"></script>
+	<footer>
+			<button class="btn-default" onclick="fontSize(+1)" >Zoom +</button>
+			<button class="btn-default" onclick="fontSize(-1)" >Zoom -</button>
+	</footer>
+	
+{% endblock %}
