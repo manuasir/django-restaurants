@@ -13,4 +13,5 @@ urlpatterns = [
   url(r'^getinfo/$', views.getinfo, name='getinfo'),
   url(r'^getallrestaurantes/$', views.getallrestaurantes, name='getallrestaurantes'),
   url(r'^gettweets/$', views.gettweets, name='gettweets'),
+  url(r'^puntuarestaurante$', views.puntuarestaurante, name='puntuarestaurante'),
 ]

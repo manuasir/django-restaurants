@@ -10,46 +10,6 @@
 		var conta=0;
 
 
-		$(function () {
-		    Highcharts.chart('container', {
-		        title: {
-		            text: 'Puntuaciones en tu zona',
-		            x: -20 //center
-		        },
-		        subtitle: {
-		            text: 'opiniones de usuarios',
-		            x: -20
-		        },
-		        xAxis: {
-		            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-		                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-		        },
-		        yAxis: {
-		            title: {
-		                text: 'Temperature (°C)'
-		            },
-		            plotLines: [{
-		                value: 0,
-		                width: 1,
-		                color: '#808080'
-		            }]
-		        },
-		        tooltip: {
-		            valueSuffix: 'votaciones'
-		        },
-		        legend: {
-		            layout: 'vertical',
-		            align: 'right',
-		            verticalAlign: 'middle',
-		            borderWidth: 0
-		        },
-		        series: [{
-		            name: '',
-		            data: [7.0, 6.9, 9.5, 14.5, 18.2, 21.5, 25.2, 26.5, 23.3, 18.3, 13.9, 9.6]
-		        }]
-		    });
-		});
-
 		function getTweets(term){
 
 			var query;
@@ -59,7 +19,7 @@
 				query = term;
 			$("#twitter").empty();
 
-			console.log("getTweets!");
+			//console.log("getTweets!");
 			$.get({
 			  url: "/restaurantes/gettweets",
 			  beforeSend: function(xhr){xhr.setRequestHeader('query', query);},
@@ -86,19 +46,20 @@
 			  beforeSend: function(xhr){xhr.setRequestHeader('desplazamiento', conta);},
 			  context: document.body
 			}).done(function(array) {
-				console.log("llego de getrestaurantes");
+				//console.log("llego de getrestaurantes");
 				$("#lista").empty();
 				var json = JSON.parse(array);
-				console.log(array);
+				//console.log(array);
 				var id;
 				
 				for(var i=0;i<json.length;i++){
 					id = json[i]._id.$oid;
-					console.log(id);
+				//	console.log(id);
 					$("#lista").append('<div class="row"><li id='+json[i]._id.$oid+' class="list-group-item"><button type="button" class="btn btn-default">'
 						+json[i].nombre
 						+'</button></li></div>')
 					$('#'+json[i]._id.$oid).data("data",json[i]).on('click',function(){
+						console.log("he pulsado ",$(this).data("data"));
 						getInfo($(this).data("data"));
 					});
 					
@@ -111,12 +72,12 @@
 		function puntuar(data){
 
 			var puntuacion = $('#puntuar').val()
-			console.log("Puntuar",puntuacion);
+			//console.log("Puntuar",puntuacion);
 			if(puntuacion && puntuacion>0){
 				var datos = {};
 				datos.id = data;
 				datos.puntos = puntuacion;
-				console.log("puntuando",data,puntuacion)
+			//	console.log("puntuando",data,puntuacion)
 
 				$.post({
 			  		url: "/restaurantes/puntuarestaurante",
@@ -135,7 +96,6 @@
 		}
 
 		function getInfo(data){
-			console.log("en getInfo, llamo a tweets!!!!!!!!!!")
 			getTweets(data.nombre);
 			for(var i=0;i<markers.length;i++){
 				if(markers[i].info.nombre == data.nombre)
@@ -149,9 +109,49 @@
 			  context: document.body
 			}).done(function(array) {
 				var json = JSON.parse(array);
-				console.log("llego de getALLRESTAURANTES",json);
-
 				setMarkerAtAddress(json,function(){
+					console.log("mqarkers",markers);
+					var categorias = _.map(markers, function(o){ return o.info.cp })
+					var temp = _.groupBy(markers,function(o){ return o.info.cp})
+					console.log("temp ",temp);
+					var puntuaciones = _.map(temp, function(o){ return o.length })
+					console.log("puntuaciones",puntuaciones)
+					 Highcharts.chart('container', {
+				        title: {
+				            text: 'Puntuaciones en tu zona',
+				            x: -20 //center
+				        },
+				        subtitle: {
+				            text: 'opiniones de usuarios',
+				            x: -20
+				        },
+				        xAxis: {
+				            categories: categorias
+				        },
+				        yAxis: {
+				            title: {
+				                text: 'Nº de restaurantes'
+				            },
+				            plotLines: [{
+				                value: 0,
+				                width: 1,
+				                color: '#808080'
+				            }]
+				        },
+				        tooltip: {
+				            valueSuffix: 'votaciones'
+				        },
+				        legend: {
+				            layout: 'vertical',
+				            align: 'right',
+				            verticalAlign: 'middle',
+				            borderWidth: 0
+				        },
+				        series: [{
+				            name: '',
+				            data: puntuaciones
+				        }]
+				    });
 					callback()
 				})
 			});	
@@ -194,7 +194,7 @@
 				//console.log($('#direccion').val());
 				peticionGetHttpPlace(addresses,function(array){
 						var place = array.results[0].geometry;
-						console.log("setmarkerataddres",array.results[0]);
+						//console.log("setmarkerataddres",array.results[0]);
 						var marker = setMarker(place);
 						map.setZoom(18);
 						map.setCenter(marker.getPosition());
@@ -232,7 +232,7 @@
 		}
 
 		function createInfo(places,callback){
-			console.log("obteniendo info de ",places._id);
+			//console.log("obteniendo info de ",places._id);
 			$.get({
 			  url: "/restaurantes/getinfo",
 			  beforeSend: function(xhr){xhr.setRequestHeader('id', places._id.$oid)},
@@ -241,7 +241,7 @@
 					//console.log(array);
 				var arraytemp = JSON.parse(temp);
 				var array = arraytemp[0];
-				console.log("Recibida info->",array);
+				//console.log("Recibida info->",array);
 
 			  	var contentString = '<div id="content">'+
 			      '<div id="siteNotice">Nombre: '+array.nombre+
@@ -268,7 +268,7 @@
 
 		function setMarker(places){
 			var place = places.location
-			console.log("setmarker",places);
+			//console.log("setmarker",places);
 			var marker = new google.maps.Marker({position: {lat: place.lat, lng: place.lng}});
 			marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
 			var info;
@@ -286,7 +286,7 @@
 		}
 
 		function peticionGetHttpPlace(args,callback){
-			console.log("buscando ",args.direccion)
+			//console.log("buscando ",args.direccion)
 			$.get({
 				  url: "http://maps.google.com/maps/api/geocode/json?address="+args.direccion,
 				  context: document.body
@@ -299,7 +299,7 @@
 		function addRestaurantes(){
 			var direccionUsuario = $('#direccion').val();
 			var nombre = $('#nombre').val();
-			console.log(nombre);
+			//console.log(nombre);
 			var json = {};
 			var peticion = {};
 			peticion.direccion = direccionUsuario;
@@ -307,20 +307,20 @@
 			//json.direccion = direccionUsuario;
 			
 			peticionGetHttpPlace(peticion,function(arr,yo){
-				console.log(arr);
+				//console.log(arr);
 				json.cp = arr.results[0].address_components[6].long_name;
 				json.direccion = arr.results[0].formatted_address;
 				json.nombre = nombre;
-				console.log("JSON ",json);
+				//console.log("JSON ",json);
 				$.post({
 			  		url: "/restaurantes/addrestaurantes",
 			  		data: json,
 					context: document.body
 				}).done(function(array) {
-					console.log("array",array);
+					//console.log("array",array);
 					var envio = {};
 					envio.id=JSON.parse(array).$oid;
-					console.log("_OID ",envio.id);
+					//console.log("_OID ",envio.id);
 					envio.location = arr.results[0].geometry.location;
 
 					marker = setMarker(envio);
@@ -395,6 +395,7 @@
 	<script src="https://code.highcharts.com/highcharts.js"></script>
 	<script src="https://code.highcharts.com/modules/exporting.js"></script>
 	<script src="https://cdn.jsdelivr.net/sweetalert2/6.3.2/sweetalert2.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
 	<footer>
 			<button class="btn-default" onclick="fontSize(+1)" >Zoom +</button>
 			<button class="btn-default" onclick="fontSize(-1)" >Zoom -</button>

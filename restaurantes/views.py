@@ -84,7 +84,7 @@ def getallrestaurantes(request):
 @login_required(login_url='/accounts/login/')
 def gettweets(request):
 	print "GET TWEETS"
-	if request.META['HTTP_QUERY']:
+	if 'HTTP_QUERY' in request.META:
 		qu = str(request.META['HTTP_QUERY'])
 	else:
 		qu = 'restaurantes granada'
@@ -94,3 +94,24 @@ def gettweets(request):
 	    dic["textos"].append(t.text);
 	    print "---"
 	return HttpResponse(dumps(dic))
+
+@csrf_exempt
+@login_required(login_url='/accounts/login/')
+def puntuarestaurante(request):
+	restaurantes = db.restaurantes
+	puntuaciones = db.puntuaciones
+	myid = request.POST.get("id",'')
+	puntos = request.POST.get("puntos",'')
+	restaurante_id = {}
+	print "puntua"
+	print myid
+	print int(puntos)
+	
+	#direccion = request.form['direccion']
+	puntuacion_id = puntuaciones.insert( {'puntuacion': int(puntos) ,'idRestaurante': ObjectId(myid)})
+	restaurante_id = restaurantes.update_one({'_id': ObjectId(myid),{'$inc': {'puntuacion': int(puntos)}}})
+	 #puntuacion_id = puntuaciones.insert({'idRestaurante': ObjectId(myid)},{'puntuacion'})
+	if restaurante_id:
+		return HttpResponse(200)
+	else:
+		return HttpResponse(404)
