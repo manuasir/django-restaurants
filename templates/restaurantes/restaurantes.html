@@ -59,9 +59,9 @@
 				query = term;
 			$("#twitter").empty();
 
-			console.log("getTweets");
+			console.log("getTweets!");
 			$.get({
-			  url: "/gettweets",
+			  url: "/restaurantes/gettweets",
 			  beforeSend: function(xhr){xhr.setRequestHeader('query', query);},
 			  context: document.body
 			}).done(function(array) {
@@ -83,9 +83,10 @@
 				conta = 0;;
 			$.get({
 			  url: "/restaurantes/getrestaurantes",
+			  beforeSend: function(xhr){xhr.setRequestHeader('desplazamiento', conta);},
 			  context: document.body
 			}).done(function(array) {
-				console.log("salida ",array);
+				console.log("llego de getrestaurantes");
 				$("#lista").empty();
 				var json = JSON.parse(array);
 				console.log(array);
@@ -118,7 +119,7 @@
 				console.log("puntuando",data,puntuacion)
 
 				$.post({
-			  		url: "/puntuarestaurante",
+			  		url: "/restaurantes/puntuarestaurante",
 			  		data: datos,
 					context: document.body
 				}).done(function(array) {
@@ -134,6 +135,7 @@
 		}
 
 		function getInfo(data){
+			console.log("en getInfo, llamo a tweets!!!!!!!!!!")
 			getTweets(data.nombre);
 			for(var i=0;i<markers.length;i++){
 				if(markers[i].info.nombre == data.nombre)
@@ -143,10 +145,12 @@
 		}
 		function getAllRestaurantes(callback){
 			$.get({
-			  url: "/getallrestaurantes",
+			  url: "/restaurantes/getallrestaurantes",
 			  context: document.body
 			}).done(function(array) {
 				var json = JSON.parse(array);
+				console.log("llego de getALLRESTAURANTES",json);
+
 				setMarkerAtAddress(json,function(){
 					callback()
 				})
@@ -228,9 +232,10 @@
 		}
 
 		function createInfo(places,callback){
+			console.log("obteniendo info de ",places._id);
 			$.get({
-			  url: "/getinfo",
-			  beforeSend: function(xhr){xhr.setRequestHeader('id', places._id.$oid);},
+			  url: "/restaurantes/getinfo",
+			  beforeSend: function(xhr){xhr.setRequestHeader('id', places._id.$oid)},
 			  context: document.body
 			}).done(function(temp) {
 					//console.log(array);
@@ -336,8 +341,7 @@
 			<div class="panel panel-default">
  				<div class="panel-heading">Introducir restaurante</div>
  					<div class="panel-body">
-							{% csrf_token %}
-
+						
 							<label for="nombre">Nombre: </label><br>
 							<input class="form-control" type="text" id="nombre"><br>
 							

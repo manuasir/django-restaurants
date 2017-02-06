@@ -7,6 +7,7 @@ import tweepy
 import pymongo
 from bson.json_util import dumps
 import json
+from bson.objectid import ObjectId
 client = settings.CLIENT.test_database
 db = client.restdb
 
@@ -38,12 +39,17 @@ def restaurantes(request):
 
 @csrf_exempt
 @login_required(login_url='/accounts/login/')
-def getDatosRestaurantes(request):
+def getrestaurantes(request):
 	restaurantes = db.restaurantes
-	print restaurantes
-	#restaurante_id = restaurantes.find().sort('$natural', pymongo.ASCENDING).limit(3).skip(desplazamiento)
-	restaurante_id = restaurantes.find({})
-	print dumps(restaurante_id)
+	print "GET RESTAURANTES"
+	if request.META['HTTP_DESPLAZAMIENTO']:
+		desplazamiento = request.META['HTTP_DESPLAZAMIENTO']
+		print desplazamiento
+	else:
+		desplazamiento = 0
+	restaurante_id = restaurantes.find().sort('$natural', pymongo.ASCENDING).limit(3).skip(int(desplazamiento))
+
+	#restaurante_id = restaurantes.find()
 	return HttpResponse(dumps(restaurante_id))	
 
 @csrf_exempt
@@ -54,6 +60,37 @@ def addrestaurantes(request):
 	nombre = request.POST.get("nombre",'')
 	direccion = request.POST.get("direccion",'')
 	restaurante_id = restaurantes.insert({'nombre': nombre, 'direccion': direccion , 'cp': cp, 'puntuacion':5})
-	print restaurante_id
-	return dumps(restaurante_id)			
+	return HttpResponse(dumps(restaurante_id))	
 
+@csrf_exempt
+@login_required(login_url='/accounts/login/')
+def getinfo(request):
+	restaurantes = db.restaurantes
+	myid = request.META["HTTP_ID"]
+	restaurante_id = restaurantes.find({'_id': ObjectId(myid)})
+	#print restaurante_id
+	return HttpResponse(dumps(restaurante_id))
+
+@csrf_exempt
+@login_required(login_url='/accounts/login/')
+def getallrestaurantes(request):
+	restaurantes = db.restaurantes
+	print "GET ALL RESTAURANTES"
+	restaurante_id = restaurantes.find()
+	print restaurante_id
+	return HttpResponse(dumps(restaurante_id))
+
+@csrf_exempt
+@login_required(login_url='/accounts/login/')
+def gettweets(request):
+	print "GET TWEETS"
+	if request.META['HTTP_QUERY']:
+		qu = str(request.META['HTTP_QUERY'])
+	else:
+		qu = 'restaurantes granada'
+	tt=tweepy.Cursor(api.search, q = qu).items(5)
+	dic = {'textos': []}
+	for t in tt:
+	    dic["textos"].append(t.text);
+	    print "---"
+	return HttpResponse(dumps(dic))
