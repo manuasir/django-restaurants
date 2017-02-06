@@ -9,9 +9,10 @@
     <link rel="icon" href="http://getbootstrap.com/favicon.ico">
 
     <title>Restaurantes - {% block title %}How to Tango with Django!{% endblock %}</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
-    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="http://getbootstrap.com/examples/dashboard/dashboard.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
@@ -47,27 +48,19 @@
         </div>
       </div>
     </div>
-
     <div class="container-fluid">
+
+    
       <div class="row">
+        {% if user.is_authenticated %}
+          {% block content %}{% endblock %}
+        {% else %}
         <div class="col-sm-3 col-md-2 sidebar">
                 {% block login %}{% endblock %}
 
         </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-           <div>
-                {% block content %}{% endblock %}
-                </div>
-        </div>
+        {% endif %}
       </div>
     </div>
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="http://getbootstrap.com/dist/js/bootstrap.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="http://getbootstrap.com/assets/js/ie10-viewport-bug-workaround.js"></script>
   </body>
 </html>
