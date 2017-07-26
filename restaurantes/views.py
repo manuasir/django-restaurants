@@ -109,7 +109,7 @@ def puntuarestaurante(request):
 	
 	#direccion = request.form['direccion']
 	puntuacion_id = puntuaciones.insert( {'puntuacion': int(puntos) ,'idRestaurante': ObjectId(myid)})
-	restaurante_id = restaurantes.update_one({'_id': ObjectId(myid),{'$inc': {'puntuacion': int(puntos)}}})
+	#restaurante_id = restaurantes.update_one({'_id': ObjectId(myid),{'$inc': {'puntuacion': int(puntos)}}})
 	 #puntuacion_id = puntuaciones.insert({'idRestaurante': ObjectId(myid)},{'puntuacion'})
 	if restaurante_id:
 		return HttpResponse(200)
