@@ -41,10 +41,8 @@ def restaurantes(request):
 @login_required(login_url='/accounts/login/')
 def getrestaurantes(request):
 	restaurantes = db.restaurantes
-	print "GET RESTAURANTES"
 	if request.META['HTTP_DESPLAZAMIENTO']:
 		desplazamiento = request.META['HTTP_DESPLAZAMIENTO']
-		print desplazamiento
 	else:
 		desplazamiento = 0
 	restaurante_id = restaurantes.find().sort('$natural', pymongo.ASCENDING).limit(3).skip(int(desplazamiento))
@@ -75,15 +73,12 @@ def getinfo(request):
 @login_required(login_url='/accounts/login/')
 def getallrestaurantes(request):
 	restaurantes = db.restaurantes
-	print "GET ALL RESTAURANTES"
 	restaurante_id = restaurantes.find()
-	print restaurante_id
 	return HttpResponse(dumps(restaurante_id))
 
 @csrf_exempt
 @login_required(login_url='/accounts/login/')
 def gettweets(request):
-	print "GET TWEETS"
 	if 'HTTP_QUERY' in request.META:
 		qu = str(request.META['HTTP_QUERY'])
 	else:
@@ -92,7 +87,6 @@ def gettweets(request):
 	dic = {'textos': []}
 	for t in tt:
 	    dic["textos"].append(t.text);
-	    print "---"
 	return HttpResponse(dumps(dic))
 
 @csrf_exempt
@@ -103,9 +97,7 @@ def puntuarestaurante(request):
 	myid = request.POST.get("id",'')
 	puntos = request.POST.get("puntos",'')
 	restaurante_id = {}
-	print "puntua"
-	print myid
-	print int(puntos)
+
 	
 	#direccion = request.form['direccion']
 	puntuacion_id = puntuaciones.insert( {'puntuacion': int(puntos) ,'idRestaurante': ObjectId(myid)})
